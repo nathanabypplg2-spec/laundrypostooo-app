@@ -203,19 +203,26 @@ export function Sidebar({ role, loading = false, isOpen = true, onToggle, mobile
                 )}
                 <div className="px-2.5 space-y-0.5">
                   {visibleItems.map((item, idx) => {
-                    const active = pathname === item.href ||
-                      (item.href !== '/dashboard' && item.href !== '/mitra/commission' && pathname.startsWith(item.href));
+                    const matchesRoute = pathname === item.href || pathname.startsWith(`${item.href}/`);
+                    const hasMoreSpecificMatch = visibleItems.some((candidate) =>
+                      candidate.href.length > item.href.length &&
+                      (pathname === candidate.href || pathname.startsWith(`${candidate.href}/`)),
+                    );
+                    const active = matchesRoute && !hasMoreSpecificMatch;
                     const Icon = item.icon;
                     return (
                       <Link
                         key={`${item.href}-${idx}`}
                         href={item.href}
                         onClick={opts.onNavigate}
-                        className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 whitespace-nowrap"
+                        className={cn(
+                          'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors duration-150 whitespace-nowrap',
+                          active ? 'font-semibold' : 'font-normal',
+                        )}
                         style={active ? {
                           background: 'var(--sb-active-bg)',
                           color: 'var(--sb-text-active)',
-                          boxShadow: `inset 3px 0 0 0 ${item.color}, 0 4px 14px -4px ${hexToRgba(item.color, 0.35)}`,
+                          boxShadow: `inset 3px 0 0 0 ${item.color}`,
                         } : { color: 'var(--sb-text)' }}
                         onMouseEnter={(e) => {
                           if (active) return;
