@@ -3,6 +3,7 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import { createClient } from '@supabase/supabase-js';
 import { createSupabaseAdmin } from '@/lib/supabase/admin';
 import { dummyUsers } from '@/constants/dummy';
+import { getSupabaseEnv } from '@/lib/supabase/env';
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -33,8 +34,8 @@ export const authOptions: NextAuthOptions = {
             };
           }
 
-          const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-          const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+          const supabaseUrl = getSupabaseEnv('NEXT_PUBLIC_SUPABASE_URL');
+          const supabaseAnonKey = getSupabaseEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY');
 
           if (!supabaseUrl || !supabaseAnonKey) {
             console.error('Auth Error: Missing Supabase environment variables');

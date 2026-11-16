@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { createSupabaseAdmin } from '@/lib/supabase/admin';
+import { getSupabaseEnv } from '@/lib/supabase/env';
 
 export async function POST(req: Request) {
   try {
@@ -13,9 +14,15 @@ export async function POST(req: Request) {
       );
     }
 
+    const supabaseUrl = getSupabaseEnv('NEXT_PUBLIC_SUPABASE_URL');
+    const supabaseAnonKey = getSupabaseEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY');
+    if (!supabaseUrl || !supabaseAnonKey) {
+      throw new Error('Supabase URL / publishable key belum dikonfigurasi di Vercel.');
+    }
+
     const authClient = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      supabaseUrl,
+      supabaseAnonKey,
       {
         auth: {
           persistSession: false,
