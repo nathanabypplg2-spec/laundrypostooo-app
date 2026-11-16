@@ -2,6 +2,7 @@ import type { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { createClient } from '@supabase/supabase-js';
 import { createSupabaseAdmin } from '@/lib/supabase/admin';
+import { dummyUsers } from '@/constants/dummy';
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -14,6 +15,23 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         try {
           if (!credentials?.email || !credentials?.password) return null;
+
+          // Demo accounts are intentionally available only when explicitly enabled.
+          if (process.env.NEXT_PUBLIC_USE_DUMMY === 'true') {
+            if (credentials.password !== 'password') return null;
+            const user = dummyUsers.find(
+              (candidate) => candidate.email.toLowerCase() === credentials.email!.trim().toLowerCase(),
+            );
+            if (!user) return null;
+            return {
+              id: user.id,
+              email: user.email,
+              name: user.name,
+              role: user.role,
+              outlet_id: user.outlet_id ?? null,
+              mitra_id: user.mitra_id ?? null,
+            };
+          }
 
           const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
           const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
