@@ -34,8 +34,8 @@ export const authOptions: NextAuthOptions = {
             };
           }
 
-          const supabaseUrl = getSupabaseEnv('NEXT_PUBLIC_SUPABASE_URL');
-          const supabaseAnonKey = getSupabaseEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY');
+          const supabaseUrl = getSupabaseEnv(process.env.NEXT_PUBLIC_SUPABASE_URL, 'NEXT_PUBLIC_SUPABASE_URL');
+          const supabaseAnonKey = getSupabaseEnv(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY, 'NEXT_PUBLIC_SUPABASE_ANON_KEY');
 
           if (!supabaseUrl || !supabaseAnonKey) {
             console.error('Auth Error: Missing Supabase environment variables');

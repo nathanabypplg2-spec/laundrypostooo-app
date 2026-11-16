@@ -3,8 +3,7 @@
  * This also recovers when multiple KEY=value lines were pasted into one Vercel
  * value field, which otherwise gets sent verbatim as an invalid HTTP header.
  */
-export function getSupabaseEnv(name: string): string | undefined {
-  const raw = process.env[name];
+export function getSupabaseEnv(raw: string | undefined, name: string): string | undefined {
   if (!raw) return undefined;
 
   let value = raw.trim().replace(/^(["'])(.*)\1$/s, '$2').trim();

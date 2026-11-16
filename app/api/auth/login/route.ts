@@ -14,8 +14,8 @@ export async function POST(req: Request) {
       );
     }
 
-    const supabaseUrl = getSupabaseEnv('NEXT_PUBLIC_SUPABASE_URL');
-    const supabaseAnonKey = getSupabaseEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY');
+    const supabaseUrl = getSupabaseEnv(process.env.NEXT_PUBLIC_SUPABASE_URL, 'NEXT_PUBLIC_SUPABASE_URL');
+    const supabaseAnonKey = getSupabaseEnv(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY, 'NEXT_PUBLIC_SUPABASE_ANON_KEY');
     if (!supabaseUrl || !supabaseAnonKey) {
       throw new Error('Supabase URL / publishable key belum dikonfigurasi di Vercel.');
     }
