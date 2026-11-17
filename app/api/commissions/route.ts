@@ -1,6 +1,19 @@
 import { NextResponse } from 'next/server';
 import { createSupabaseAdmin } from '@/lib/supabase/admin';
 import { getCurrentUser, isSuperAdmin } from '@/lib/server-auth';
+import { dummyMitra } from '@/constants/dummy';
+
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const DEMO_MITRA_UUID: Record<string, string> = { m1: '00000000-0000-0000-0000-000000000002' };
+
+async function resolveMitraId(supabase: ReturnType<typeof createSupabaseAdmin>, mitraId: string) {
+  if (UUID_PATTERN.test(mitraId)) return mitraId;
+  if (process.env.NEXT_PUBLIC_USE_DUMMY !== 'true' || !dummyMitra.some((m) => m.id === mitraId)) return null;
+  const seededId = DEMO_MITRA_UUID[mitraId];
+  if (!seededId) return null;
+  const { data } = await supabase.from('mitra').select('id').eq('id', seededId).maybeSingle();
+  return data?.id ?? null;
+}
 
 function mapCommission(row: any) {
   return {
@@ -26,7 +39,9 @@ export async function GET() {
 
     if (user?.role === 'mitra') {
       if (!user.mitra_id) return NextResponse.json({ data: [] });
-      query = query.eq('mitra_id', user.mitra_id);
+      const mitraId = await resolveMitraId(supabase, user.mitra_id);
+      if (!mitraId) return NextResponse.json({ data: [] });
+      query = query.eq('mitra_id', mitraId);
     }
 
     if (user?.role === 'admin') {

@@ -7,6 +7,7 @@ import { getCurrentUser } from '@/lib/server-auth';
 import { createNotification } from '@/lib/notifications';
 import { createSupabaseAdmin as adminClient } from '@/lib/supabase/admin';
 import { dummyOutlets } from '@/constants/dummy';
+import { dummyMitra } from '@/constants/dummy';
 
 // PostgreSQL accepts UUID-shaped values even when their version/variant bits are zero.
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -22,7 +23,14 @@ export async function GET() {
 
     if (user?.role === 'mitra') {
       if (!user.mitra_id) return NextResponse.json({ data: [] });
-      query = query.eq('mitra_id', user.mitra_id);
+      let mitraId = user.mitra_id;
+      if (!UUID_PATTERN.test(mitraId) && process.env.NEXT_PUBLIC_USE_DUMMY === 'true') {
+        const demoMitra = dummyMitra.find((mitra) => mitra.id === mitraId);
+        if (!demoMitra || mitraId !== 'm1') return NextResponse.json({ data: [] });
+        mitraId = '00000000-0000-0000-0000-000000000002';
+      }
+      if (!UUID_PATTERN.test(mitraId)) return NextResponse.json({ data: [] });
+      query = query.eq('mitra_id', mitraId);
     }
 
     if (user?.role === 'admin' && user.outlet_id) {
@@ -95,7 +103,13 @@ export async function POST(req: Request) {
         : 0;
 
     // ─── FIX: Ambil commission_pct dari DB, jangan dari body ──────────────
-    const mitraId = body.mitra_id || (user?.role === 'mitra' ? user.mitra_id : null);
+    let mitraId = body.mitra_id || (user?.role === 'mitra' ? user.mitra_id : null);
+    if (mitraId && !UUID_PATTERN.test(mitraId) && process.env.NEXT_PUBLIC_USE_DUMMY === 'true' && mitraId === 'm1') {
+      mitraId = '00000000-0000-0000-0000-000000000002';
+    }
+    if (mitraId && !UUID_PATTERN.test(mitraId)) {
+      return NextResponse.json({ error: 'Mitra demo belum terhubung ke data Supabase.' }, { status: 400 });
+    }
     let commissionPct = 0;
 
     if (mitraId) {
