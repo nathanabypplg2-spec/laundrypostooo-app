@@ -6,6 +6,10 @@ import { TRANSACTION_SELECT, mapTransaction, nextInvoiceNoFromCount } from '@/li
 import { getCurrentUser } from '@/lib/server-auth';
 import { createNotification } from '@/lib/notifications';
 import { createSupabaseAdmin as adminClient } from '@/lib/supabase/admin';
+import { dummyOutlets } from '@/constants/dummy';
+
+// PostgreSQL accepts UUID-shaped values even when their version/variant bits are zero.
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export async function GET() {
   try {
@@ -22,7 +26,21 @@ export async function GET() {
     }
 
     if (user?.role === 'admin' && user.outlet_id) {
-      query = query.eq('outlet_id', user.outlet_id);
+      let outletId = user.outlet_id;
+      // Demo profiles use ids like "o1"; resolve them to the matching real Supabase outlet.
+      if (!UUID_PATTERN.test(outletId) && process.env.NEXT_PUBLIC_USE_DUMMY === 'true') {
+        const demoOutlet = dummyOutlets.find((outlet) => outlet.id === outletId);
+        if (!demoOutlet) return NextResponse.json({ data: [] });
+        const { data: outlet } = await supabase
+          .from('outlets')
+          .select('id')
+          .eq('name', 'Outlet Pusat')
+          .maybeSingle();
+        if (!outlet?.id) return NextResponse.json({ data: [] });
+        outletId = outlet.id;
+      }
+      if (UUID_PATTERN.test(outletId)) query = query.eq('outlet_id', outletId);
+      else return NextResponse.json({ data: [] });
     }
 
     const { data, error } = await query;
@@ -108,7 +126,7 @@ export async function POST(req: Request) {
         status: body.status ?? 'diterima',
         notes: body.notes ?? null,
         est_done_at: body.est_done_at || new Date(Date.now() + 48 * 3600 * 1000).toISOString(),
-        created_by: user?.id ?? null,
+        created_by: user?.id && UUID_PATTERN.test(user.id) ? user.id : null,
       })
       .select('id')
       .single();
